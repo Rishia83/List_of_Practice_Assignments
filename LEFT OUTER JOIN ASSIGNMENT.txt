@@ -1,0 +1,166 @@
+
+JOIN
+----
+
+USE WAREHOUSE ANAND_FIRST;
+USE DATABASE AGENT_PERFORMANCE;
+
+-----------
+CREATE OR REPLACE TABLE BROKER_RA
+(
+   BROKERID INTEGER NOT NULL PRIMARY KEY,
+   BrokerCode VARCHAR2 (50),
+   BrokerFullName VARCHAR2(50),
+   DistributionNetwork VARCHAR2(50),
+   DistributionChannel VARCHAR2(50),
+   CommissionScheme VARCHAR2(50)
+);
+
+SELECT * FROM BROKER_RA;-- 708 ROWS
+DESCRIBE TABLE BROKER_RA;
+-------------
+CREATE OR REPLACE TABLE PRODUCTS_RA
+(ProductID INTEGER,
+ProductCategory VARCHAR2 (50),
+ProductSubCategory VARCHAR2 (50),
+Product VARCHAR2 (50) );
+
+SELECT * FROM PRODUCTS_RA;-- 78 ROWS
+------------
+CREATE OR REPLACE TABLE REGIONS_RA
+(id int,
+ name VARCHAR2 (100),
+ county varchar (100),
+ state_code VARCHAR2 (50),
+ state VARCHAR2 (50),
+ type VARCHAR2 (50),
+ area_code int,
+ population int,
+ households	int,
+ median_income int,
+ land_area int,
+ water_area int,
+ time_zone VARCHAR2 (80));
+ 
+SELECT * FROM REGIONS_RA; --995 rows
+
+------------------------
+CREATE OR REPLACE TABLE  CUSTOMERS_RA
+(CustomerID INTEGER NOT NULL PRIMARY KEY,
+ LastName VARCHAR2 (50),
+ FirstName VARCHAR2 (50),
+ BirthDate VARCHAR2 (50),
+ Gender	VARCHAR2 (30),
+ ParticipantType VARCHAR2 (30),
+ RegionID int,
+ MaritalStatus VARCHAR2 (50));
+
+SELECT * FROM CUSTOMERS_RA; --12306 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE STATE_REGIONS_RA 
+(StateCode VARCHAR2 (50),State VARCHAR2 (50),Region VARCHAR2 (50));
+
+SELECT * FROM STATE_REGIONS_RA; --49 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE PRIORITIES_RA 
+(ID int, Description_Priorities VARCHAR2 (50));
+
+SELECT * FROM PRIORITIES_RA; --3 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE STATUSES_RA 
+(ID int, Description_Status VARCHAR2 (50));
+
+SELECT * FROM STATUSES_RA; --8 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE CATEGORIES_RA 
+(ID int, Description_Category VARCHAR2 (200), Active int);
+
+SELECT * FROM CATEGORIES_RA; --57 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE SOURCES_RA (ID int,	Description_Source VARCHAR2 (50));
+
+SELECT * FROM SOURCES_RA; --10 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE TYPES_RA (ID int, Description_Type VARCHAR2 (50));
+
+SELECT * FROM TYPES_RA; --11 ROWS
+
+------------------------
+CREATE OR REPLACE TABLE COMPLAINS_RA 
+(ComplainID int, 
+ ComplainDate varchar2 (50),
+ CompletionDate	varchar2 (50),
+ CustomerID	INTEGER NOT NULL PRIMARY KEY,
+ BrokerID INTEGER ,	
+ ProductID int,
+ ComplainPriorityID int,
+ ComplainTypeID int,
+ ComplainSourceID int,
+ ComplainCategoryID int,
+ ComplainStatusID int,
+ AdministratorID varchar2 (50),
+ ClientSatisfaction varchar2 (30),
+ ExpectedReimbursement float);
+
+SELECT * FROM COMPLAINS_RA;
+
+SELECT DISTINCT * FROM COMPLAINS_RA; 
+
+DESCRIBE * FROM COMPLAINS_RA;
+
+-------------------------------
+CREATE OR REPLACE TABLE STATUS_HISTORY_DATA
+(ID int,
+ ComplaintID int NOT NULL REFERENCES COMPLAINS_RA,
+ ComplaintStatusID int,	
+ StatusDate varchar2 (50));
+
+SELECT * FROM STATUS_HISTORY_DATA;
+DESCRIBE TABLE STATUS_HISTORY_DATA;
+
+-------------------------
+---TOTAL TABLE--------
+SELECT * FROM CUSTOMERS_RA; --CUSTOMERID is pk
+select count (distinct CUSTOMERID) FROM CUSTOMERS_RA; --12305
+SELECT * FROM BROKER_RA; --BROKERID is pk
+SELECT * FROM PRODUCTS_RA; --product id
+SELECT * FROM REGIONS_RA;--id is pk
+SELECT * FROM STATE_REGIONS_RA; --STATECODE is pk
+SELECT * FROM PRIORITIES_RA; --id is pk
+SELECT * FROM STATUSES_RA; --ID
+SELECT * FROM CATEGORIES_RA; --id is pk
+SELECT * FROM SOURCES_RA; --id
+SELECT * FROM TYPES_RA;--ID
+SELECT * FROM COMPLAINS_RA;
+SELECT * FROM STATUS_HISTORY_DATA;
+--------------------------------
+
+---CREATE MASTER TABLE with LEFT OUTER JOIN-------------------
+
+CREATE OR REPLACE TABLE RA_MASTER AS
+SELECT COM.ComplainID,COM.ComplainDate,COM.CompletionDate,CUS.LastName,CUS.FirstName,CUS.Gender,BR.BrokerFullName,
+BR.CommissionScheme,CAT.Description_Category,SR.Region,ST.Description_StatuS,REG.state,PR.Product,PRI.Description_Priorities,
+SUR.Description_Source,TY.Description_Type
+FROM COMPLAINS_RA as COM
+LEFT OUTER JOIN CUSTOMERS_RA as CUS ON COM.CustomerID = CUS.CustomerID
+LEFT OUTER JOIN STATUS_HISTORY_DATA as SH ON COM.ComplainStatusID = SH.ID
+LEFT OUTER JOIN REGIONS_RA as REG ON CUS.RegionID = REG.id
+LEFT OUTER JOIN STATE_REGIONS_RA as SR ON REG.state_code = SR.StateCode
+LEFT OUTER JOIN BROKER_RA as BR ON COM.BrokerID = BR.BROKERID
+LEFT OUTER JOIN CATEGORIES_RA as CAT ON COM.ComplainCategoryID = CAT.ID
+LEFT OUTER JOIN PRIORITIES_RA as PRI ON COM.ComplainPriorityID = PRI.ID
+LEFT OUTER JOIN PRODUCTS_RA as PR ON COM.ProductID = PR.ProductID
+LEFT OUTER JOIN SOURCES_RA as SUR ON COM.ComplainSourceID = SUR.ID
+LEFT OUTER JOIN STATUSES_RA as ST ON COM.ComplainStatusID =ST.ID
+LEFT OUTER JOIN TYPES_RA as TY ON COM.ComplainTypeID = TY.ID;
+
+DESCRIBE TABLE RA_MASTER;
+
+SELECT * FROM RA_MASTER;
+---------------------------------------------------------------------------
